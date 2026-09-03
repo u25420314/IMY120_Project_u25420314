@@ -2,6 +2,7 @@ import { useState } from "react"
 import Post from "../components/Post"
 import EditPost from "../components/EditPost"
 import Comments from "../components/Comments"
+import { dummyPosts, dummyComments } from "../dummyData"
 
 
 function PostPage(){
@@ -9,19 +10,7 @@ function PostPage(){
     const[isEditing, setIsEditing] = useState(false)
 
     //temp data
-    const post ={
-        id: 1,
-        author : {
-            id: 1,
-            name: "tempName",
-            username: "tempUsername",
-            image: ""
-        },
-        postImage: "",
-        caption: "",
-        likes: 0
-
-    }
+    const post = dummyPosts[0]
 
 
 
@@ -35,6 +24,7 @@ function PostPage(){
             <button onClick={() => setIsEditing(!isEditing)}>
                 {isEditing ? "Cancel" : "EditPost"}
             </button>
+            <Comments comments={dummyComments}/>
         </main>
     )
 }

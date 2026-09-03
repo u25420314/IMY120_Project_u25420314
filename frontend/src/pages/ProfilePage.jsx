@@ -4,6 +4,7 @@ import EditProfile from "../components/EditProfile"
 import UserPosts from "../components/UserPosts"
 import FriendsList from "../components/FriendsList"
 import CreatePost from "../components/CreatePost"
+import { dummyFriends, dummyPosts } from "../dummyData"
 
 function ProfilePage(){
 
@@ -30,8 +31,8 @@ function ProfilePage(){
             <button onClick={() =>setIsEditing(!isEditing)}> {isEditing ? "Cancel" : "Edit Profile"}</button>
 
             <CreatePost/>
-            <UserPosts posts ={[]}/>
-            <FriendsList friends={[]}/>
+            <UserPosts posts ={dummyPosts}/>
+            <FriendsList friends={dummyFriends}/>
 
             
         </main>

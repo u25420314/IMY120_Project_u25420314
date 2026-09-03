@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 
 function ProfilePreview({ profile }){
     return (
-        <div>
+        <div className="preview-card">
             <Link to={`/profile/${profile.id}`}>
                 <img src={profile.profileImage} alt="ProfileImage"/>
 

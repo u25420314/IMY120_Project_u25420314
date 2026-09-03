@@ -3,7 +3,7 @@ import ProfilePreview from "./ProfilePreview"
 
 function PostPreview({ post }){
     return(
-        <div>
+        <div className="preview-card">
             <ProfilePreview profile={post.author}/>
 
             <Link to={`/post/${post.id}`}>
