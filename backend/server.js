@@ -293,6 +293,161 @@ try{
         res.status(500).json({ error: "Failed to add comment"})
     }
 })
+
+//report
+app.post("/api/posts/:id/report", async (req, res) => {
+
+    const { reason, reportedBy} = req.body
+    try{
+        const db = getDB();
+        const report = { reason, reportedBy, createdAt: new Date()}
+
+        await db.collection("Posts").updateOne(
+            { _id: new ObjectId(req.params.id)},
+            { $push: { reports: report}}
+        )
+
+        res.status(200).json ({ message : "Post reported successfully"})
+
+    }catch(error) {
+        console.error ("Error reporting post", error); 
+        res.status(500).json({error: "Failed to report a post"})
+    }
+});
+
+//
+//---------------ALBUMS ENDPOINTS----------------
+//
+
+//retrieve all of the albums
+app.get("/api/albums", async (req, res) => {
+    try{
+        const posts = await getDB().collection("Albums").find().toArray();
+        res.status(200).json(albums)
+    }catch(error){
+        console.error("Error retrieving albums", error)
+        res.status(500).json({ error : "Failed to retrieve albums"})
+    }
+})
+
+//create an album
+app.post("/api/albums", async (res, req) => {
+    const {userId, name, description, hashtags} = req.body;
+
+    if(!name || !name.trim()){
+        return res.status(400).json({ error: "Album name is required"})
+    }
+
+    try{
+        const db = getDB()
+        const newAlbum = {
+            userId,
+            name,
+            description: description || "",
+            hashtags: hashtags || [],
+            createdAt: new Date()
+        }
+
+        const result = await db.collection("Albums").insertOne(newAlbum)
+
+        res.status(201).json({
+            _id: result.insertId,
+            ...newAlbum
+        });
+
+    }catch(error){
+        console.error("Error adding album: ", error)
+        res.status(500).json({error: "Failed to create album"})
+    }
+});
+
+//edit album name desc and hash
+app.put("/api/albums/:id", async (req, res) => {
+
+    const {name, description, hashtags} = req.body
+
+
+    try{
+        const db = getDB()
+
+        const results = await db.collection("Albums").updateOne({ _id: new ObjectId(req.params.id)}, { $set : { name, description, hashtags}})
+        if(!results){
+            return res.status(404).json({error: "Post not found"})
+        }
+        if(results.userId.toString() !== userId){
+            return res.status(403).json({ error: "You can only edit your own posts"})
+        }
+
+        
+        
+        res.status(200).json({messsage : "Album updated successfully"})
+        
+    }catch (err){
+        console.error("Error updating Album:", error)
+        res.status(500).json({error : "Failed to update Album"})
+    }
+})
+
+//delete album
+app.delete("/api/albums/:id", async (req, res) => {
+    try{
+        const db = getDB();
+        const result = await db.collection("Albums").deleteOne({_id: new ObjectId(req.params.id)})
+
+        if(result.deletedCount === 0){
+            return res.status(404).json({ error: "Album not found"})
+
+
+        }
+
+        res.status(200).json ({ message : "Album deleted successfully"})
+
+    }catch(error) {
+        console.error ("Error deleting album", error); 
+        res.status(500).json({error: "Failed to delete a album"})
+    }
+});
+
+//add post to album
+app.post("/api/albums/:id/posts", async (req, res) => {
+    const {postId} = req.body;
+
+    try{
+        const db = getDB();
+        await db.collection("Albums").updateOne(
+            { _id : new ObjectId(req.params.id)},
+            { $addToSet: { postIds: postId}}
+        )
+
+        res.status(200).json({ message: "Post added to album successfully"})
+        
+
+
+    }catch(error) {
+        console.error ("Error adding post to album", error); 
+        res.status(500).json({error: "Failed to add post to album"})
+    }
+});
+
+//remove post from album
+app.delete("/api/albums/:id/posts/:postId", async (req, res) => {
+    const {id, postId} = req.params;
+
+    try{
+        const db = getDB();
+        await db.collection("Albums").updateOne(
+            { _id: new ObjectId(id)},
+            { $pull: { postIds: postId}}
+        )
+
+        res.status(200).json({ message : "Post removed from album successfully"})
+
+    }catch(error){
+        console.error("Error removing post from album", error);
+        res.status(500).json({error: "Failed to remove post from album"})
+    }
+})
+
 //health
 app.get("/api/health", (req, res) => {
     res.json({status : "ok"})
