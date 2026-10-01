@@ -13,69 +13,6 @@ app.use(cors())
 app.use(express.json())
 
 
-// function checkId(req, res, next, value){
-//     if(!ObjectId.isValid(value)){
-//         return res.status(400).json({ message : "Invalid id"})
-        
-//     }
-//     next()
-// }
-
-// app.param("id", checkId)
-// app.param("postId", checkId)
-// app.param("commentId", checkId)
-
-// const sameId = (a, b) => String(a) === String(b)
-
-
-// function parseHashtags(input){
-//     if(!input) return []
-
-//     const ist = Array.isArray(input) ? input : String(input).split(/[\s,]+/)
-//     const cleaned = list
-//         .map((t) => String(t).trim().replace(/^#+/, "").toLowerCase())
-//         .filter(Boolean)
-//     return [...new Set(cleaned)]
-// }
-
-
-
-//const users = () => getDB().collection("Users")
-
-
-
-// async function createUser({username, email, passwordHash}) {
-//     const result = await users().insertOne({
-//         username, 
-//         email, 
-//         passwordHash,
-//         friends: [],
-//         friendRequests: [], 
-//         createdAt: new Date()
-//     })
-
-//     return result.insertedId
-// }
-
-//const findUserByEmail = (email) => users().findOne({ email})
-//const findUserById = (id) => users().findOne({ _id: new ObjectId(id)})
-
-// function toPublicUser(user){
-//     const out = {
-//         id: user._id, 
-//         username:  user.username, 
-//         bio : user.bio || "",
-//         avatar: user.avatar || "",
-//         friends: user.friends || [],
-//         createdAt: user.createdAt
-
-//     }
-
-//     if(includesEmail) out.email = user.email
-
-//     return out
-// }
-
 
 
 //update user profile
@@ -103,7 +40,7 @@ app.put("/api/users/:id", async (req, res) => {
 
 //send friend request
 
-app.post("/api/users/freind-request", async (req, res) => {
+app.post("/api/users/friend-request", async (req, res) => {
     const {senderId, recieverId } = req.body;
 
     try{
@@ -120,7 +57,7 @@ app.post("/api/users/freind-request", async (req, res) => {
 })
 
 //accept a friend
-app.post("/api/users/accept-friend", async ( res, req) => {
+app.post("/api/users/accept-friend", async ( req, res) => {
     const {userId, friendId} = req.body
     try{
         const db = getDB()
@@ -161,6 +98,35 @@ app.post("/api/users/unfriend", async (req, res) => {
     }
 })
 
+//delete user profile
+app.delete("/api/users/:id", async (req, res) => {
+    const userId = req.params.id;
+
+    if(!ObjectId.isValid(userId)){
+        return res.status(400).json ({ error: "Invalid user ID"})
+    }
+
+    try{
+        const db = getDB();
+        const objectId = new ObjectId(userId);
+
+        const userResult = await db.collection("Users").deleteOne({ _id: objectId})
+
+        if(userResult.deletedCount === 0){
+            return res.status(404).json({ error : "User not found"})
+        }
+
+        await db.collection("Posts").deleteMany({ userId: userId})
+
+        await db.collection("Albums").deleteMany({userId: userId})
+
+        res.status(200).json({message: "User profile and associated data has been deleted"})
+    }catch{
+        console.error("Error deleting user profile", error)
+        res.status(200).json({message: "Failed to delete user profile"})
+    }
+})
+
 //
 // -----------POST ENDPOINTS ----_-------
 //
@@ -177,7 +143,7 @@ app.get("/api/posts", async (req, res) => {
 })
 
 //craete a post (img desc and hash)
-app.post("/api/posts", async (res, req) => {
+app.post("/api/posts", async (req, res) => {
     const {userId, username, caption, imageUrl, hashtags} = req.body;
 
     if(!caption || !caption.trim()){
@@ -201,7 +167,7 @@ app.post("/api/posts", async (res, req) => {
         const result = await db.collection("Posts").insertOne(newPost)
 
         res.status(201).json({
-            _id: result.insertId,
+            _id: result.insertedId,
             ...newPost
         });
 
@@ -215,7 +181,7 @@ app.post("/api/posts", async (res, req) => {
 //edit post desc and hashtags
 app.put("/api/posts/:id", async (req, res) => {
 
-    const {userId, description, hashtags} = req.body
+    const {caption, hashtags} = req.body
 
     if(!ObjectId.isValid(req.params.id) || !ObjectId.isValid(userId)){
         return res.status(400).json({ message : "Invalid id"})
@@ -224,7 +190,7 @@ app.put("/api/posts/:id", async (req, res) => {
     try{
         const db = getDB()
 
-        const results = await getDB().collection("Posts").updateOne({ _id: new ObjectId(req.params.id)}, { $set : { caption, hashtags}})
+        const results = await db.collection("Posts").updateOne({ _id: new ObjectId(req.params.id)}, { $set : { caption, hashtags}})
         if(!results){
             return res.status(404).json({error: "Post not found"})
         }
@@ -331,7 +297,7 @@ app.get("/api/albums", async (req, res) => {
 })
 
 //create an album
-app.post("/api/albums", async (res, req) => {
+app.post("/api/albums", async (req, res) => {
     const {userId, name, description, hashtags} = req.body;
 
     if(!name || !name.trim()){
@@ -351,7 +317,7 @@ app.post("/api/albums", async (res, req) => {
         const result = await db.collection("Albums").insertOne(newAlbum)
 
         res.status(201).json({
-            _id: result.insertId,
+            _id: result.insertedId,
             ...newAlbum
         });
 
@@ -487,7 +453,7 @@ app.post("/api/signup", async (req, res) =>{
          
 
         res.status(201).json({
-            _id: result.insertId,
+            _id: result.insertedId,
             username,
             email,
             message: "Signup successfull",
