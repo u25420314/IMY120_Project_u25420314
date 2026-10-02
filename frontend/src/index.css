@@ -1,4 +1,13 @@
 
+@import "tailwindcss";
+
+
+@theme{
+  --color-flick-teal: #5bc0be;
+  --color-flick-dark: #0b132b;
+  --color-flick-card: #1c2541;
+  --font-sans: 'Inter', sans-serif;
+}
 
 * {
   text-align: center;

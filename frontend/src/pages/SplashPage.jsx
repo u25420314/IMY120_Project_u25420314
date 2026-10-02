@@ -7,8 +7,8 @@ function SplashPage(){
 
     return(
         <main>
-            {showLogin ? <LoginForm onSwitch={() => setShowLogin(false)}/>
-                : <SignupForm onSwitch={() => setShowLogin(true)}/>
+            {showLogin ? <LoginForm onSwitchtoSignup={() => setShowLogin(false)}/>
+                : <SignupForm onSwitchLogin={() => setShowLogin(true)}/>
             }
         </main>
     )

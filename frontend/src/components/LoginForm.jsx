@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function LoginForm({ onSwitch }) {
+function LoginForm({ onLoginSuccess, onSwitchtoSignup }) {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
 
-    async function handleSubmit(event){
+    const handleSubmit = async (event) => {
         event.preventDefault()
+        setLoading(true)
+
+
 
         //validation
         if(!email || !password){
@@ -34,6 +38,14 @@ function LoginForm({ onSwitch }) {
             const data = await response.json()
             console.log("Login response:", data)
 
+            if(!response.ok){
+                throw new Error(data.error || "Failed to login")
+            }
+
+            if(onLoginSuccess){
+                onLoginSuccess(data)
+            }
+
             navigate("/home")
         }catch(e){
             console.error("Login request failed:", e)
@@ -42,36 +54,52 @@ function LoginForm({ onSwitch }) {
     }
 
     return(
-        <form onSubmit={handleSubmit}>
-            <h1>Login</h1>
+        <div className="min-h-screen bg-[var(--color-flick-teal)] flex flex-col items-center justify-center p-6">
+            <div className="text-center mb-6">
+                <h1 className="text-5xl font-black text-black">FLICK</h1>
+                <p className="text-sm font-semibold text-black/80">Make your life a movie</p>
+            </div>
 
-            {error && <p role="alert">{error}</p> }
+            <div className="bg-white/20 p-8 rounded-xl shadow-md w-full max-w-sm backdrop-blur-sm border border-white/30">
+                <h2 className="text-2xl font-bold text-center text-black mb-6">Login</h2>
+                {error && <p role="alert">{error}</p> }
+            </div>
+            <form onSubmit={handleSubmit}>
+                
+
+                
 
 
-            <label htmlFor="email">Email:</label>
-            <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Please enter your email address"
-            />
+                <label htmlFor="email">Email:</label>
+                <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Please enter your email address"
+                    className="w-full px-4 py-3 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black"
+                />
 
-            <label htmlFor="password">Password:</label>
-            <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Please enter your password"
-            />
+                <label htmlFor="password">Password:</label>
+                <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Please enter your password"
+                    className="w-full px-4 py-3 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black"
+                />
 
-            <button type="submit">Sign up</button>
-
-            <p>Don't have an account? {" "}<button type="button" onClick={onSwitch}>Sign Up</button></p>
+                <button type="submit" disabled={loading} className="w-full bg-black text-white py-3 rounded font-bold hover:bg-gray-800 transition mt-2 cursor-pointer disabled:opacity-50">{loading ? 'LOGINING IN...' : 'LOGIN'}</button>
+                <div className="mt-6 text-center">
+                    <p className="text-xs text-black/70 mb-2">Don't have an account? {" "}<button type="button" onClick={onSwitchtoSignup} className="font-bold text-black underline hover:text-gray-800 cursor-pointer">Sign Up</button></p>
+                </div>
+                
             
             
-        </form>
+            </form> 
+        </div>
+        
     )
 }
 export default LoginForm
