@@ -3,13 +3,15 @@ import ProfilePreview from "./ProfilePreview";
 function FriendsList({ friends }){
 
     return(
-        <div>
+        <section>
+            <h2>Friends ({friends.length})</h2>
 
-            <h2>Friends</h2>
+            {friends.length === 0 && <p>No friends yet.</p>}
+
             {friends.map((friend) => (
-                <ProfilePreview key={friend.id} profile={friend}/>
+                <ProfilePreview key={friend._id} profile={friend}/>
             ))}
-        </div>
+        </section>
     )
 }
 

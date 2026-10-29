@@ -12,6 +12,12 @@ const PORT = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 
+function idVariants(ids){
+    const strings = ids.filter(Boolean).map(id => id.toString())
+    const objectIds = strings.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id))
+    return [...strings, ...objectIds]
+}
+
 
 
 
@@ -59,18 +65,22 @@ app.post("/api/users/friend-request", async (req, res) => {
 //accept a friend
 app.post("/api/users/accept-friend", async ( req, res) => {
     const {userId, friendId} = req.body
+
+    if(userId == recieverId){
+        return res.status(400).json({ error: "YOu cannot friend yourself"})
+    }
     try{
         const db = getDB()
 
         await db.collection("Users").updateOne(
             { _id: new ObjectId(userId)},
             {
-                $push: {friends: friendId}, $pull : { friendRequests: friendId}
+                $addToSet: {friends: friendId}, $pull : { friendRequests: friendId}
             }
         );
         await db.collection("Users").updateOne(
             { _id: new ObjectId(friendId)},
-            {$push: {friends: userId}}
+            {$addToSet: {friends: userId}}
         );
 
         res.status(200).json({message : "Friend request has been accepted"})
@@ -78,6 +88,31 @@ app.post("/api/users/accept-friend", async ( req, res) => {
         console.error("Error accpeting friend request", error)
         res.status(500).json({error: "Failed to accept friend request"})
     }
+})
+
+//decline a friend request
+app.post("/api/users/decline-friend", async (req, res) => {
+    const {userId, friendId} = req.body
+
+    if(!ObjectId.isValid(userId) || !ObjectId.isValid(friendId)){
+        return res.status(400).json({ error: "invalid id"})
+    }
+
+    try{
+        const db = getDB()
+
+        await db.collection("Users").updateOne(
+            { _id: new ObjectId(userId)},
+            { $pull: { friendRequests: friendId}}
+        )
+
+        res.status(200).json({message: "Friend request decline"})
+    }catch(error){
+        console.error("Error declining friend request", error)
+        res.status(500).json({ error: "Failed to decline friend request"})
+    }
+
+
 })
 
 //remove a friend(unfriend)
@@ -89,6 +124,14 @@ app.post("/api/users/unfriend", async (req, res) => {
         await db.collection("Users").updateOne(
             { _id: new ObjectId(friendId)},
             { $pull: { friends: userId}}
+
+        
+
+        )
+
+        await db.collection("Users").updateOne(
+            { _id: new ObjectId(userId)},
+            { $pull: { friends: friendId}}
 
         )
         res.status(200).json({message : "Successfully removed friend"})
@@ -121,7 +164,7 @@ app.delete("/api/users/:id", async (req, res) => {
         await db.collection("Albums").deleteMany({userId: userId})
 
         res.status(200).json({message: "User profile and associated data has been deleted"})
-    }catch{
+    }catch(error){
         console.error("Error deleting user profile", error)
         res.status(200).json({message: "Failed to delete user profile"})
     }
@@ -131,10 +174,95 @@ app.delete("/api/users/:id", async (req, res) => {
 // -----------POST ENDPOINTS ----_-------
 //
 
+async function canManage(db, ownerId, userId) {
+    if(!userId){
+        return false
+    }
+
+    if(ownerId?.toString() === userId){
+        return true
+    }
+
+    if(!objectId.isValid(userId)) {
+        return false
+    }
+
+    const user = await db.collection("Users").findOne({ _id: new ObjectId(userId)})
+    return user?.role ==="admin"
+}
+
+//get ome post and the album it is for the post page
+app.get("/api/posts/:id", async (req, res) => {
+    if(!ObjectId.isValid(req.params.id)){
+        return res.status(400).json({ error: "invalid post id"})
+    }
+
+
+    try{
+        const db = getDB()
+        const post = await db.collection("Posts").findOne({ _id: new ObjectId(req.params.id)})
+
+        if(!post){
+            return res.status(404).json({ error: "Post not found"})
+
+        }
+
+        const albums = await db.collection("Ablums")
+            .find({ postIds: req.params.id})
+            .project({ name: 1})
+            .toArray(0)
+
+        res.status(200).json({ ...post, albums })
+    }catch(error){
+        console.error("error retrieving post", error)
+        res.status(500).json({ error: "Failed to retrieve post"})
+    }
+})
+
 //retrieve all of the posts
 app.get("/api/posts", async (req, res) => {
+
+    const { scope = "global", userId, sort = "newest", hashtag, author} = req.query
+
     try{
-        const posts = await getDB().collection("Posts").find().toArray();
+
+        const db = getDB()
+        const filter = {}
+
+        if(scope === "local"){
+            if(!ObjectId.isValid(userId)){
+                return res.status(400).json({ error: "valid userId required for local feed"})
+
+            }
+
+            const user = await db.collection("Users").findOne({ _id: new ObjectId(userId)})
+            if(!user){
+                return res.status(404).json({ error: "user not found"})
+            }
+
+            filter.userId = {$in: idVariants([userId, ...(user.friends || [])])}
+
+            const ids = [userId, ...(user.friends || [])].map(id => id.toString())
+            const objectIds = ids.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id))
+            filter.userId = {$in: [...ids, ...objectIds]}
+        }
+
+        if(author){
+            filter.userId = {$in: idVariants([author])}
+        }
+        
+        
+
+
+        if(hashtag){
+            const tag = hashtag.replace(/^#/, "")
+            filter.hashtags = {$in: [tag, `#${tag}`]}
+        }
+        let posts = await db.collection("Posts").find(filter).sort({ createdAt: -1}).toArray()
+
+        if(sort === "comments"){
+            posts.sort((a,b) => (b.comments?.length || 0) - (a.comments?.length || 0))
+        }
         res.status(200).json(posts)
     }catch(error){
         console.error("Error retrieving posts", error)
@@ -181,22 +309,30 @@ app.post("/api/posts", async (req, res) => {
 //edit post desc and hashtags
 app.put("/api/posts/:id", async (req, res) => {
 
-    const {caption, hashtags} = req.body
+    const {caption, hashtags, userId} = req.body
 
     if(!ObjectId.isValid(req.params.id) || !ObjectId.isValid(userId)){
-        return res.status(400).json({ message : "Invalid id"})
+        return res.status(400).json({ error : "Invalid id"})
+    }
+
+    if(!caption || !caption.trim()){
+        return res.status(400).json({ error: "Caption is required"})
     }
 
     try{
         const db = getDB()
 
-        const results = await db.collection("Posts").updateOne({ _id: new ObjectId(req.params.id)}, { $set : { caption, hashtags}})
-        if(!results){
+        const post = await db.collection("Posts").updateOne({ _id: new ObjectId(req.params.id)})
+
+        if(!post){
             return res.status(404).json({error: "Post not found"})
         }
-        if(results.userId.toString() !== userId){
+
+        if(!(await canManage(db, post.userId, userId))){
             return res.status(403).json({ error: "You can only edit your own posts"})
         }
+
+       await db.collection("Posts").updateMany({ userId: req.params.id }, { $set: { username } })
 
         
         
@@ -211,15 +347,34 @@ app.put("/api/posts/:id", async (req, res) => {
 
 //delete post
 app.delete("/api/posts/:id", async (req, res) => {
+
+    const {userId}= req.body || {}
+
+    if(!ObjectId.isValid(req.params.id)){
+        return res.status(400).json({ error: "invalid post id"})
+    }
+
+
     try{
         const db = getDB();
-        const result = await db.collection("Posts").deleteOne({_id: new ObjectId(req.params.id)})
+        const post = await db.collection("Posts").findOne({_id: new ObjectId(req.params.id)})
 
-        if(result.deletedCount === 0){
-            return res.status(404).json({ error: "Post not found"})
-
-
+        if(!post){
+                return res.status(404).json({ error: "Post not found"})
         }
+
+        if(!(await canManage(db, post.userId, userId))){
+                return res.status(403).json({ error: "You can only delete your own posts"})
+        }
+
+        await db.collection("Posts").deleteOne({ _id: post._id })
+
+        
+
+        await db.collection("Albums").updateMany(
+            {},
+            { $pull: { postIds: req.params.id}}
+        )
 
         res.status(200).json ({ message : "Post deleted successfully"})
 
@@ -231,33 +386,43 @@ app.delete("/api/posts/:id", async (req, res) => {
 
 //coment on  post
 app.post("/api/posts/:id/comments", async ( req ,res) => {
-const {username, text} = req.body;
 
+    const {userId, username, text} = req.body;
 
-if( !text || !text.trim()){
-    return res.status(400).json({ error : "Comment text is required"})
-
-
-}
-
-try{
-    const db = getDB();
-    const comment = {
-        commentId: new ObjectId(),
-        username,
-        text, 
-        createdAT: new Date()
-    };
-
-    await db.collection("Posts").updateOne(
-        { _id: new ObjectId(req.params.id)},
-        { $push: { comments: comment}}
-    );
-    res.status(201).json(comment);
-    }catch(error){
-        console.error("Error adding a comment: ", error)
-        res.status(500).json({ error: "Failed to add comment"})
+    if(!ObjectId.isValid(req.params.id)){
+        return res.status(400).json({ error: "Invalid post id"})
     }
+
+    if( !text || !text.trim()){
+        return res.status(400).json({ error : "Comment text is required"})
+
+
+    }
+
+    try{
+        const db = getDB();
+        const comment = {
+            commentId: new ObjectId(),
+            userId,
+            username,
+            text: text.trim(),
+            createdAt: new Date()
+        };
+
+        const result = await db.collection("Posts").updateOne(
+            { _id: new ObjectId(req.params.id)},
+            { $push: { comments: comment}}
+        );
+
+        if(result.matchedCount === 0){
+            return res.status(404).json({ error: "Post not found"})
+        }
+
+        res.status(201).json(comment);
+        }catch(error){
+            console.error("Error adding a comment: ", error)
+            res.status(500).json({ error: "Failed to add comment"})
+        }
 })
 
 //report
@@ -287,9 +452,25 @@ app.post("/api/posts/:id/report", async (req, res) => {
 
 //retrieve all of the albums
 app.get("/api/albums", async (req, res) => {
+    const { userId } = req.query
+
+
     try{
-        const posts = await getDB().collection("Albums").find().toArray();
-        res.status(200).json(albums)
+        const db = getDB()
+        const filter = userId ? { userId: {$in: idVariants([userId])} } : {}
+        const albums = await db.collection("Albums").find(filter).sort({ createdAt: -1 }).toArray()
+
+        const firstPostIds = albums.map(album => album.postIds?.[0]).filter(id => id && ObjectId.isValid(id))
+        const covers = await db.collection("Posts")
+            .find({ _id: {$in: firstPostIds.map(id => new ObjectId(id))} })
+            .project({ imageUrl: 1})
+            .toArray()
+
+        const result = albums.map(album => {
+            const cover = covers.find(post => post._id.toString() === album.postIds?.[0]?.toString())
+            return { ...album, coverImage: cover?.imageUrl || "" }
+        })
+        res.status(200).json(result)
     }catch(error){
         console.error("Error retrieving albums", error)
         res.status(500).json({ error : "Failed to retrieve albums"})
@@ -489,7 +670,9 @@ app.post("/api/login", async (req, res) =>{
 
         }
 
-        res.status(200).json(user)
+        const {password: _pw, ...safeUser} = user
+
+        res.status(200).json(safeUser)
     }catch(error){
         console.error("Error loggin in:", error)
         res.status(500).json({error: "Failed to log in"})
@@ -503,14 +686,46 @@ app.post("/api/login", async (req, res) =>{
 app.get("/api/users", async (req, res) => {
     try{
         const users = await getDB().collection("Users").find().toArray();
-        res.status(200).json(users);
+
+        const safeUsers = users.map(({ password, ...rest}) => rest)
+        res.status(200).json(safeUsers);
 
     }catch(error){
         console.error("Error retrieving users:", error)
         res.status(500).json({ error: "Failed to retrieve users"})
     }
 })
+app.get("/api/users/:id/connections", async (req, res) => {
+    if(!ObjectId.isValid(req.params.id)){
+        return res.status(400).json({ error: "Invalid user id"})
+    }
 
+    try{
+        const db = getDB()
+        const user = await db.collection("Users").findOne({ _id: new ObjectId(req.params.id)})
+
+        if(!user){
+            return res.status(404).json({ error: "User not found"})
+        }
+        const toObjectIds = (ids = []) => ids.filter(id => id && ObjectId.isValid(id)).map(id => new ObjectId(id))
+        const publicFields = { username: 1, profilePicture: 1 }
+
+        const friends = await db.collection("Users")
+            .find({ _id: {$in: toObjectIds(user.friends)} })
+            .project(publicFields)
+            .toArray()
+
+        const requests = await db.collection("Users")
+            .find({ _id: {$in: toObjectIds(user.friendRequests)} })
+            .project(publicFields)
+            .toArray()
+
+        res.status(200).json({ friends, requests })
+    }catch(error){
+        console.error("Error retrieving connections", error)
+        res.status(500).json({ error: "Failed to retrieve friends"})
+    }
+})
 
 //get the users by their id
 app.get("/api/users/:id", async (req, res) => {
@@ -523,7 +738,9 @@ app.get("/api/users/:id", async (req, res) => {
             return res.status(404).json({ error: "User not found"})
         }
 
-        res.status(200).json(user)
+        const {password: _pw, ...safeUser} = user
+
+        res.status(200).json(safeUser)
     }catch(err){
         console.error("Error retrieving user profile",err)
         res.status(500).json({ error: "Failed to retrieve user profile"})

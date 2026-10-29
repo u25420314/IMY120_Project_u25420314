@@ -9,7 +9,7 @@ import './App.css'
 
 function AppContent() {
   //const [count, setCount] = useState(0)
-  const Location = useLocation()
+  const location = useLocation()
   const showNav = location.pathname !== "/"
 
   return (

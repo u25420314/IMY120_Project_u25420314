@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
+import { saveUser } from "../session"
 
 function LoginForm({ onLoginSuccess, onSwitchtoSignup }) {
     const [email, setEmail] = useState("")
@@ -10,8 +12,7 @@ function LoginForm({ onLoginSuccess, onSwitchtoSignup }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        setLoading(true)
-
+        
 
 
         //validation
@@ -25,6 +26,7 @@ function LoginForm({ onLoginSuccess, onSwitchtoSignup }) {
         }
 
         setError("")
+        setLoading(true)
 
         try{
             const response = await fetch("http://localhost:3000/api/login", {
@@ -39,8 +41,10 @@ function LoginForm({ onLoginSuccess, onSwitchtoSignup }) {
             console.log("Login response:", data)
 
             if(!response.ok){
-                throw new Error(data.error || "Failed to login")
+                throw new Error(data.error || data.message || "Failed to login")
             }
+
+            saveUser(data)
 
             if(onLoginSuccess){
                 onLoginSuccess(data)
@@ -49,7 +53,9 @@ function LoginForm({ onLoginSuccess, onSwitchtoSignup }) {
             navigate("/home")
         }catch(e){
             console.error("Login request failed:", e)
-            setError("Something went wrong, please try again")
+            setError(e.message || "Something went wrong, please try again")
+        }finally{
+            setLoading(false)
         }
     }
 

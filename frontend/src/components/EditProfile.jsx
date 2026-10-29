@@ -109,15 +109,16 @@ function EditProfile({ currentUser, onProfileUpdated }){
 
 
                 <div className="flex flex-col gap-4">
-                    <label htmlFor="image" className="block text-sm font-semibold text-black mb-1">Change Profile Photo</label>
+                    <label htmlFor="profilePicture" className="block text-sm font-semibold text-black mb-1">Profile Photo URL</label>
                     <input
-                        type="file"
-                        id="image"
-                        accept="image/*"
-                        onChange={(e) => setImage(e.target.value)}
+                        type="text"
+                        id="profilePicture"
+                        value={profilePicture}
+                        onChange={(e) => setProfilePicture(e.target.value)}
+                        placeholder="https://example.com/me.jpg"
                         className="w-full px-4 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black"
-                    
                     />
+                    {profilePicture && <img src={profilePicture} alt="New profile picture preview"/>}
                 </div>
                 
             

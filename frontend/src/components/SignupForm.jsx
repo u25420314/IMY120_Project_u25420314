@@ -1,5 +1,7 @@
 import {useState} from "react"
 import { useNavigate } from "react-router-dom"
+import { API_URL } from "../config";
+import { saveUser } from "../session"
 
 function SignupForm({ onSignupSuccess, onSwitchLogin }) {
     const [username, setUsername] = useState("")
@@ -12,7 +14,7 @@ function SignupForm({ onSignupSuccess, onSwitchLogin }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        setLoading(true)
+        
 
         //validation
         if(!username || !email || !password || !confirmPassword){
@@ -31,9 +33,10 @@ function SignupForm({ onSignupSuccess, onSwitchLogin }) {
         }
 
         setError("")
+        setLoading(true)
 
         try{
-            const response = await fetch("http://localhost:3000/api/signup" , {
+            const response = await fetch(`${API_URL}/api/signup`, {
                 method: "POST",
                 headers: {"Content-Type" : "application/json"},
                 body: JSON.stringify({ username, email, password})
@@ -47,13 +50,16 @@ function SignupForm({ onSignupSuccess, onSwitchLogin }) {
             }
             console.log("Signup response:", data)
             
+            saveUser(data)
+
             if(onSignupSuccess){
                 onSignupSuccess(data)
             }
-            navigate("/login")
+
+            navigate("/home")
         }catch(e){
             console.error("Signup request failed: " ,e)
-            setError("Somethinf went wrong. please try again")
+            setError(e.message || "Something went wrong. please try again")
         }
         finally{
             setLoading(false)

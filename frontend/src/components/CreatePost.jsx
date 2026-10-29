@@ -1,5 +1,5 @@
 import {useState} from "react"
-import { currentUser } from "../dummyData"
+import { getUser } from "../session"
 
 function CreatePost({ currentUser, onPostCreated}){
     const [imageUrl, setImageUrl] = useState("")
@@ -23,7 +23,7 @@ function CreatePost({ currentUser, onPostCreated}){
             .filter((tag) => tag.length > 0)
             .map((tag) => (tag.startsWith('#') ? tag : `#${tag}`))
         
-
+        const currentUser = getUser()
         setLoading(true)
 
         try{
@@ -85,6 +85,8 @@ function CreatePost({ currentUser, onPostCreated}){
                         placeholder="https://example.com/image.jpg"
                         className="w-full px-4 py-2 rounded bg-white text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-black"
                     />
+
+                    {imageUrl && <img src={imageUrl} alt="Preview of your post"/>}
                 </div>
             
                 <div>
@@ -98,9 +100,10 @@ function CreatePost({ currentUser, onPostCreated}){
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-black mb-1">Hashtags (Optional)</label>
+                    <label htmlFor="postHashtags" className="block text-sm font-semibold text-black mb-1">Hashtags (Optional)</label>
                     <input
                         type="text"
+                        id="postHashtags"
                         value={hashtagsInput}
                         onChange={(e) => setHashtagsInput(e.target.value)}
                         placeholder="movie, flick, lifestyle"
