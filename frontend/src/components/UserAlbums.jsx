@@ -6,7 +6,7 @@ function UserAlbums({ albums}){
             <h2>Albums ({albums.length})</h2>
 
             {albums.length === 0 ? (
-                <p>No Albums yet</p>
+                <p className="empty">No Albums yet</p>
             ) : (
                 <div className="album-grid">
                     {albums.map((album) => (

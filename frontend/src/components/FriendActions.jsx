@@ -2,35 +2,32 @@ function FriendActions({ status, onAdd, onAccpet, onDecline, onUnfriend}){
     if(status === "friends"){
         return (
             <div>
-                <span>✓ Friends</span>
+                <span className="status-badge">Friends</span>
                 <button type="button" onClick={onUnfriend}>Unfriend</button>
             </div>
         )
     }
 
     if(status === "sent"){
-        return (
-            <div>
-                <span>Friend request pending</span>
-            </div>
-        )
+        return <span className="status-badge">Friend request pending</span>
+        
     }
 
     if(status === "received"){
         return (
-            <div>
-                <span>Wants to be your friend</span>
-                <button type="button" onClick={onAccept}>Accept</button>
+            <>
+                <span className="status-badge">Wants to be your friend</span>
+                <button type="button" className="btn-solid" onClick={onAccept}>Accept</button>
                 <button type="button" onClick={onDecline}>Decline</button>
-            </div>
+            </>
         )
     }
 
     return (
-        <div>
-            <span>Not friends</span>
-            <button type="button" onClick={onAdd}>Add friend</button>
-        </div>
+        <>
+            <span className="status-badge">Not friends</span>
+            <button type="button" className="btn-solid" onClick={onAdd}>Add friend</button>
+        </>
     )
 }
 

@@ -11,14 +11,13 @@ function ProfilePreview({ profile }){
 
     const content = (
         <>
-            <img src={image} alt={`${profile.username}'s profile picture`}/>
-            {profile.name && <h3>{profile.name}</h3>}
-            <p>@{profile.username}</p>
+            <img className="avatar" src={image} alt={`${profile.username}'s profile picture`}/>
+            <p>{profile.username}</p>
         </>
     )
     return (
-        <div className="preview-card">
-            {id ? <Link to={`/profile/${id}`}>{content}</Link> : content}
+        <div className="profile-chip">
+            {id ? <Link to={`/profile/${id}`}>{content}</Link> :<div>{content}</div>}
         </div>
     )
 }

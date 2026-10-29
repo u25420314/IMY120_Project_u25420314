@@ -1,4 +1,5 @@
-import { Link, useNavigate} from "react-router-dom"
+import { NavLink, useNavigate} from "react-router-dom"
+import Logo from "./Logo"
 import { getUser, clearUser } from "../session"
 
 function Navigation() {
@@ -12,12 +13,21 @@ function Navigation() {
     }
 
     return (
-        <nav>
-            <Link to="/home">FLICK</Link>
-            <Link to="/home">Home</Link>
-            {user && <Link to={`/profile/${user._id}`}>Profile</Link>}
-            {user && <button type="button" onClick={handleLogout}>Log out</button>}
-        </nav>
+        <header className="site-header">
+            
+            <Logo to="/home"/>
+            {user && (
+                <>
+                    
+                    <nav className="site-nav" aria-label="Main navigation">
+                        <NavLink to="/home">Home</NavLink>
+                        <NavLink to={`/profile/${user._id}`}>Profile</NavLink>
+                    </nav>
+                    <button type="button" onClick={handleLogout}>Log out</button>
+                </>
+            )}
+        </header>
+        
     )
 }
 

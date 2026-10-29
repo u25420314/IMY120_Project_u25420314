@@ -42,31 +42,29 @@ function Comments({ postId, comments, onCommentAdded}) {
     }
 
     return(
-        <section>
+        <section className="comments">
             <h2>Comments ({comments.length})</h2>
 
-            {comments.length === 0 && <p>No Comment yet</p>}
+            {comments.length === 0 && <p className="empty">No Comment yet</p>}
 
             {comments.map((comment) => (
-                <p key={comment.commentId}> <strong>{comment.username}: </strong>{comment.text}</p>
+                 <p key={comment.commentId} className="comment"><strong>{comment.username}</strong> {comment.text}</p>
             ))}
 
-            <form onSubmit={handleSubmit}>
-                {error && <p role = "alert">{error}</p>}
-                <label htmlFor="commentText">Add a comment</label>
-                <input
+            {error && <p role="alert">{error}</p>}
 
-                    type="text"
-                    id="commentText"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Pleeas leave a comment..."
-                />
-
+            <form onSubmit={handleSubmit} className="comment-form">
+                <div>
+                    <label htmlFor="commentText">Add a comment</label>
+                    <input
+                        type="text"
+                        id="commentText"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Say something nice..."
+                    />
+                </div>
                 <button type="submit" disabled={sending}>{sending ? "Posting..." : "Post"}</button>
-
-
-
             </form>
         </section>
     )

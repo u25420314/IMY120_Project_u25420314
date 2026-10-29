@@ -13,36 +13,38 @@ function PostPreview({ post}){
 
 
     return(
-        <div className="preview-card">
-            <ProfilePreview profile={author}/>
-            <p>{post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}</p>
+        <article className="post-card">
+            <header className="post-card-header">
+                <ProfilePreview profile={author}/>
+                <time className="post-date" dateTime={post.createdAt}>
+                    {post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}
+                </time>
+            </header>
 
-            <Link to={`/post/${post.id}`}>
-                {post.imageUrl && <img src={post.imageUrl} alt ={post.caption}/>}
-                <p>{post.caption}</p>
-
+            <Link to={`/post/${post._id}`} className="post-card-image">
+                {post.imageUrl && <img src={post.imageUrl} alt={post.caption}/>}
             </Link>
 
+            <div className="post-card-body">
+                <p className="post-caption">{post.caption}</p>
 
-            <Hashtags tags={post.hashtags}/>
+                <Hashtags tags={post.hashtags}/>
 
+                {latestComments.length > 0 && (
+                    <div className="post-comments">
+                        {latestComments.map((comment) => (
+                            <p key={comment.commentId}><strong>{comment.username}</strong> {comment.text}</p>
+                        ))}
+                    </div>
+                )}
 
-
-            {latestComments.length > 0 && (
-                <div>
-                    {latestComments.map((comment) => (
-                        <p key = {comment.commentId}><strong>{comment.username}: </strong>{comment.text}</p>
-                    ))}
-                </div>
-            )}
-
-            <Link to={`/post/${post._id}`}>
-                {comments.length > COMMENTS_IN_FEED
-                    ? `View all ${comments.length} comments`
-                    : `${comments.length} comments`}
-            </Link>
-        
-        </div>
+                <Link to={`/post/${post._id}`} className="post-comments-link">
+                    {comments.length > COMMENTS_IN_FEED
+                        ? `View all ${comments.length} comments`
+                        : `${comments.length} comments`}
+                </Link>
+            </div>
+        </article>
     )
 }
 

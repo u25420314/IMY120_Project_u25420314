@@ -16,16 +16,17 @@ function HomePage(){
     }
     return(
         <main>
-            <h1>Home Page</h1>
-            <SearchInput/>
+            <div className="page-head">
+                <h1 className="page-title">HOME</h1>
+                <button type="button" className="btn-solid" onClick={() => setShowCreate(!showCreate)}>
+                    {showCreate ? "Cancel" : "+ New Post"}
+                </button>
+            </div>
 
-             <button type="button" onClick={() => setShowCreate(!showCreate)}>
-                {showCreate ? "Cancel" : "+ New Post"}
-            </button>
+            <SearchInput/>
 
             {showCreate && <CreatePost onPostCreated={(post) => navigate(`/post/${post._id}`)}/>}
             <Feed />
-            
             
         </main>
     )

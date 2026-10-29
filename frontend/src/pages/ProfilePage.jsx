@@ -108,24 +108,24 @@ function ProfilePage(){
                     }}
                     onCancel={() => setIsEditing(false)}
                   />
-                : <Profile profile={profile} showDetails={canSeeEverything}/>
+                : (
+                    <Profile profile={profile} showDetails={canSeeEverything}>
+                        {isOwnProfile ? (
+                            <button type="button" onClick={() => setIsEditing(true)}>Edit Profile</button>
+                        ) : (
+                            <FriendActions
+                                status={friendStatus}
+                                onAdd={() => friendAction("/api/users/friend-request", { senderId: me._id, recieverId: id })}
+                                onAccept={() => friendAction("/api/users/accept-friend", { userId: me._id, friendId: id })}
+                                onDecline={() => friendAction("/api/users/decline-friend", { userId: me._id, friendId: id })}
+                                onUnfriend={() => friendAction("/api/users/unfriend", { userId: me._id, friendId: id })}
+                            />
+                        )}
+                    </Profile>
+                )
             }
 
-            {isOwnProfile && !isEditing && (
-                <button type="button" onClick={() => setIsEditing(true)}>Edit Profile</button>
-            )}
-
-            {!isOwnProfile && (
-                <FriendActions
-                    status={friendStatus}
-                    onAdd={() => friendAction("/api/users/friend-request", { senderId: me._id, recieverId: id })}
-                    onAccept={() => friendAction("/api/users/accept-friend", { userId: me._id, friendId: id })}
-                    onDecline={() => friendAction("/api/users/decline-friend", { userId: me._id, friendId: id })}
-                    onUnfriend={() => friendAction("/api/users/unfriend", { userId: me._id, friendId: id })}
-                />
-            )}
-
-            {actionError && <p role ="alert">{actionError}</p>}
+            {actionError && <p role="alert">{actionError}</p>}
 
             {canSeeEverything ? (
                 <>
@@ -141,9 +141,8 @@ function ProfilePage(){
                     <UserPosts posts={posts}/>
                 </>
             ) : (
-                <p>Become friends with @{profile.username} to see their posts, albums and friends</p>
+                <p className="locked">Become friends with {profile.username} to see their posts, albums and friends.</p>
             )}
-
         </main>
         
     )

@@ -72,11 +72,11 @@ function PostPage(){
     }
 
     if(loading){
-        return <main><p>Loading post...</p></main>
+        return <main className="post-page"><p className="empty">Loading post...</p></main>
     }
 
     if(error){
-        return <main><p role="alert">{error}</p></main>
+        return <main className="post-page"><p role="alert">{error}</p></main>
     }
 
     const canManage = post.userId?.toString() === currentUser._id || currentUser.role === "admin"
@@ -84,33 +84,35 @@ function PostPage(){
 
 
     return(
-        <main>
+        <main className="post-page">
 
-            <button type="button" onClick={() => navigate(-1)}>← Back</button>
-            {isEditing
-                ? <EditPost 
-                    post={post}
-                    onSaved={(updated) => {
-                        setPost((prev) => ({ ...prev, ...updated }))
-                        setIsEditing(false)
-                    }}
-                    onCancel={() => setIsEditing(false)}
-                />
-                : <Post post={post}/>
-            }
+            <button className="btn-link" type="button" onClick={() => navigate(-1)}>Back</button>
+            
+                {isEditing
+                    ? <EditPost 
+                        post={post}
+                        onSaved={(updated) => {
+                            setPost((prev) => ({ ...prev, ...updated }))
+                            setIsEditing(false)
+                        }}
+                        onCancel={() => setIsEditing(false)}
+                    />
+                    : <Post post={post}/>
+                }
+           
 
             {canManage ** !isEditing && (
-                <div>
+                <div className="post-actions">
                     <button type="button" onClick={() => setIsEditing(true)}>Edit post</button>
 
                     {confirmingDelete ? (
                         <>
                             <span>Delete this post and all its comments?</span>
-                            <button type="button" onClick={handleDelete}>Yes, delete</button>
+                            <button className="btn-danger" type="button" onClick={handleDelete}>Yes, delete</button>
                             <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
                         </>
                     ) : (
-                        <button type="button" onClick={() => setConfirmingDelete(true)}>Delete Post</button>
+                        <button className="btn-danger" type="button" onClick={() => setConfirmingDelete(true)}>Delete Post</button>
                     )}
                 </div>
             )}

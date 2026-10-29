@@ -6,11 +6,13 @@ function FriendsList({ friends }){
         <section>
             <h2>Friends ({friends.length})</h2>
 
-            {friends.length === 0 && <p>No friends yet.</p>}
+            {friends.length === 0 && <p className="empty">No friends yet.</p>}
 
-            {friends.map((friend) => (
-                <ProfilePreview key={friend._id} profile={friend}/>
-            ))}
+            <div className="friends-row">
+                {friends.map((friend) => (
+                    <ProfilePreview key={friend._id} profile={friend}/>
+                ))}
+            </div>
         </section>
     )
 }

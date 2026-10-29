@@ -49,32 +49,39 @@ function EditPost({ post, onSaved, onCancel }){
     }
 
     return(
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="panel">
             <h2>Edit Post</h2>
 
-            {post.imageUrl && <img src={post.imageUrl} alt={post.caption}/>}
+            {post.imageUrl && <img className="preview-image" src={post.imageUrl} alt={post.caption}/>}
 
             {error && <p role="alert">{error}</p>}
-            <label htmlFor="editCaption">Caption</label>
 
-            <textarea
-                id="editCaption"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder="Edit Caption..."
-            />
+            <div>
+                <label htmlFor="editCaption">Caption</label>
 
-            <label htmlFor="editHashtags">Hashtags</label>
-            <input
-                type="text"
-                id="editHashtags"
-                value={hashtagInput}
-                onChange={(e) => setHashtagsInput(e.target.value)}
-                placeholder="#movie #flick"
-            />
+                <textarea
+                    id="editCaption"
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Edit Caption..."
+                />
+            </div>
 
-            <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
-            <button type="button" onClick={onCancel}>Cancel</button>
+            <div>
+                <label htmlFor="editHashtags">Hashtags</label>
+                <input
+                    type="text"
+                    id="editHashtags"
+                    value={hashtagsInput}
+                    onChange={(e) => setHashtagsInput(e.target.value)}
+                    placeholder="#movie #flick"
+                />
+            </div>
+
+            <div className="post-actions">
+                <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
+                <button type="button" onClick={onCancel}>Cancel</button>
+            </div>
 
 
 

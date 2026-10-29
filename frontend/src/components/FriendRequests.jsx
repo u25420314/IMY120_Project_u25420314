@@ -9,9 +9,9 @@ function FriendRequests({ requests, onAccpet, onDecline}){
         <section>
             <h2>Friend Requests ({requests.length})</h2>
             {requests.map((person) => (
-                <div key={person._id}>
+                <div key={person._id} className="request-row">
                     <ProfilePreview profile={person}/>
-                    <button type="button" onClick={() => onAccept(person._id)}>Accept</button>
+                    <button type="button" className="btn-solid" onClick={() => onAccept(person._id)}>Accept</button>
                     <button type="button" onClick={() => onDecline(person._id)}>Decline</button>
                 </div>
             ))}

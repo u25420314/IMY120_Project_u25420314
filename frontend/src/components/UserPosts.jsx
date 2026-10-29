@@ -8,7 +8,7 @@ function UserPosts({ posts }){
         <section>
             <h2>Posts ({posts.length})</h2>
             {posts.length === 0 ? (
-                <p>No posts yet</p>
+                <p className="empty">No posts yet</p>
             ) : (
                 <div className="post-grid">
                     {posts.map((post) => (
