@@ -24,13 +24,16 @@ function SplashPage(){
         )
     }
     return(
-        <main>
-            <Logo/>
+        <main className="splash">
+            <div className="auth-wrap">
+                <Logo/>
 
-            {view === "login"
-                ? <LoginForm onSwitchtoSignup={() => setView("signup")}/>
-                : <SignupForm onSwitchLogin={() => setView("login")}/>
-            }
+                {view === "login"
+                    ? <LoginForm onSwitchtoSignup={() => setView("signup")}/>
+                    : <SignupForm onSwitchLogin={() => setView("login")}/>
+                }
+            </div>
+            
         </main>
     )
 }
